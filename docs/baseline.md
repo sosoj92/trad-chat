@@ -8,7 +8,7 @@ référence honnête.
 > **TL;DR** — 68 % d'accuracy / 59 % de F1 macro sur des chats **jamais vus**,
 > 3 classes. Modeste mais réel : le pipeline tient, les 3 classes sont
 > distinguées, et les erreurs sont surtout des hésitations peu confiantes.
-> Le transfer learning est le levier d'amélioration évident (voir plus bas).
+> Le transfer learning a aussi été essayé, sans gain démontré ici (voir plus bas).
 
 ---
 
@@ -27,13 +27,12 @@ Dataset **déséquilibré** : l'isolement représente la moitié des exemples.
 
 ### Téléchargement (Zenodo, public, sans compte)
 
-Le dataset n'est pas versionné (`data/catmeows/` est gitignoré). Pour le
-récupérer :
-
-```bash
-curl -L "https://zenodo.org/api/records/4008297/files/dataset.zip/content" -o data/catmeows/dataset.zip
-cd data/catmeows && unzip dataset.zip && rm dataset.zip
-```
+Le dataset n'est pas versionné (`data/catmeows/` est gitignoré). Consulte
+d'abord ses conditions sur la [fiche officielle](https://zenodo.org/records/4008297)
+(usage scientifique / non commercial indiqué par les auteurs). Télécharge
+`dataset.zip`, puis décompresse-le dans `data/catmeows/` avec l'explorateur
+de fichiers de ton système. Le téléchargement n'est pas nécessaire pour
+l'application de collecte personnelle.
 
 Les 440 `.wav` atterrissent dans `data/catmeows/dataset/`. Le loader les
 retrouve récursivement, aucune organisation manuelle n'est nécessaire.
@@ -141,11 +140,11 @@ prédites. Sur un dataset minuscule, trop augmenter empêche d'apprendre.
 ## 6. Reproduire
 
 ```bash
-uv sync --group training --group gpu     # deps (torch CUDA)
+uv sync --locked --group collecte --group training --extra cpu
 # (télécharger le dataset : voir §1)
-uv run python -m training.dataset_catmeows   # vérifier l'index + le split
-uv run python -m training.entrainement       # entraîner + évaluer + sauver
-uv run python -m inference.predire un_miaou.wav   # tester l'inférence
+uv run --no-sync python -m training.dataset_catmeows   # vérifier l'index + le split
+uv run --no-sync python -m training.entrainement       # entraîner + évaluer + sauver
+uv run --no-sync python -m inference.predire un_miaou.wav   # tester l'inférence
 ```
 
 Modèle produit : `models/baseline_catmeows_<date>_acc<XX>.pt` (embarque ses
@@ -192,9 +191,7 @@ nouveau protocole.
 
 **Reproduire**
 ```bash
-uv sync --group training --group gpu --group transfer
-# Poids PANNs (327 Mo, Zenodo) :
-curl -L "https://zenodo.org/api/records/3987831/files/Cnn14_mAP=0.431.pth/content" \
-  -o "models/panns/Cnn14_mAP=0.431.pth"
-uv run python -m training.transfer_panns   # embeddings (cache) + probe + CV
+uv sync --locked --group collecte --group training --group transfer --extra cpu
+# Télécharger Cnn14_mAP=0.431.pth dans models/panns/ (guide installation ML).
+uv run --no-sync python -m training.transfer_panns   # embeddings (cache) + probe + CV
 ```

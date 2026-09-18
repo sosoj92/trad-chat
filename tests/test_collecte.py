@@ -137,6 +137,24 @@ class TestCollecte(unittest.TestCase):
         self.assertEqual(erreur.exception.code, 422)
         self.assertFalse(any(r.get("capture_id") == "capture-invalide" for r in stockage.tous()))
 
+    def test_profil_prive_et_compatibilite(self):
+        with patch.object(serveur, "_config", {"chat": {"nom": "Moka Test"}}):
+            with self.assertRaises(urllib.error.HTTPError) as erreur:
+                self.requete("/api/labels", auth=False)
+            self.assertEqual(erreur.exception.code, 401)
+            donnees = json.load(self.requete("/api/labels"))
+            self.assertEqual(donnees["chat"]["nom"], "Moka Test")
+            self.assertEqual(donnees["labels"], serveur._labels)
+            self.assertNotIn(b"Moka Test", self.requete("/", auth=False).read())
+        with patch.object(serveur, "_config", {}):
+            self.assertEqual(json.load(self.requete("/api/labels"))["chat"]["nom"], "Mon chat")
+
+    def test_cle_exemple_refusee_meme_si_fournie(self):
+        with patch.object(serveur, "_TOKEN", "CHANGE-MOI-token-secret"):
+            with self.assertRaises(urllib.error.HTTPError) as erreur:
+                self.requete("/api/labels?token=CHANGE-MOI-token-secret", auth=False)
+            self.assertEqual(erreur.exception.code, 401)
+
     def test_reecriture_atomique(self):
         stockage.ajouter({"id": "atomic", "label": "autre", "fichier": "absent.wav", "note": "conserver"})
         avant = (self.base / "manifest.jsonl").read_bytes()

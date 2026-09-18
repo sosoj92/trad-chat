@@ -24,6 +24,7 @@ from collecte.annotations import Annotation, Capture, verifier_duree
 from collecte.exporter import exporter
 from core.annotations import jour_record, motif_exclusion
 from core.config import charger_config, labels as get_labels, labels_exclus as get_labels_exclus
+from core.config import token_sur, valider_collecte
 from core.journalisation import configurer_journalisation, obtenir_logger
 
 log = obtenir_logger(__name__)
@@ -40,7 +41,7 @@ app = FastAPI(title="Collecte miaulements", docs_url=None, redoc_url=None)
 def verifier_token(x_token: str | None = Header(default=None),
                    token: str | None = Query(default=None)) -> None:
     fourni = x_token or token or ""
-    if not _TOKEN or not secrets.compare_digest(fourni.encode(), _TOKEN.encode()):
+    if not token_sur(_TOKEN) or not secrets.compare_digest(fourni.encode(), _TOKEN.encode()):
         raise HTTPException(401, "Token invalide ou manquant.")
 
 
@@ -81,7 +82,8 @@ def public_record(record: dict) -> dict:
 
 @app.get("/api/labels", dependencies=[Depends(verifier_token)])
 def api_labels() -> dict:
-    return {"labels": _labels, "labels_exclus": _labels_exclus}
+    return {"labels": _labels, "labels_exclus": _labels_exclus,
+            "chat": {"nom": _config.get("chat", {}).get("nom", "Mon chat")}}
 
 
 @app.get("/api/stats", dependencies=[Depends(verifier_token)])
@@ -236,9 +238,8 @@ app.mount("/static", StaticFiles(directory=_STATIC), name="static")
 
 def lancer() -> None:
     import uvicorn
+    valider_collecte(_config)
     configurer_journalisation(_config)
-    if _TOKEN in ("", "CHANGE-MOI-token-secret"):
-        log.warning("Configure un token privé dans config.yaml.")
     uvicorn.run(app, host=str(_collecte_cfg.get("host", "0.0.0.0")),
                 port=int(_collecte_cfg.get("port", 8771)), log_level="info")
 

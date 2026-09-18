@@ -259,6 +259,7 @@ async function envoyer(label) {
 }
 async function chargerLabels() {
   const j=await (await api("/api/labels")).json();LABELS=j.labels;EXCLUS=j.labels_exclus||[];
+  $("titreCollecte").textContent=j.chat?.nom ? "🐱 Collecte — " + j.chat.nom : "🐱 Collecte de miaulements";
   $("tuiles").innerHTML="";
   LABELS.forEach(l=>{const b=document.createElement("button");b.className="tuile";b.textContent=noms[l]||l;b.onclick=()=>envoyer(l);$("tuiles").appendChild(b);});
   const ancien=$("filtreLabel").value;

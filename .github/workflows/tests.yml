@@ -1,0 +1,43 @@
+name: Installation et tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  collecte:
+    name: Collecte / ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    env:
+      PYTHONUTF8: "1"
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6
+        with:
+          version: "0.12.3"
+          enable-cache: false
+      - name: Installer seulement la collecte
+        run: uv sync --locked --group collecte
+      - name: Verifier que PyTorch est facultatif
+        run: uv run --no-sync python -c "import importlib.util; assert importlib.util.find_spec('torch') is None"
+      - name: Creer une configuration fictive sans afficher sa cle
+        run: uv run --no-sync python -m core.initialiser --nom-chat Demo
+      - name: Diagnostic
+        run: uv run --no-sync python -m core.diagnostic
+      - name: Installer les dependances de test
+        run: uv sync --locked --group test
+      - name: Tests isoles sur donnees synthetiques
+        run: uv run --no-sync python -m unittest discover -s tests -v
+      - name: Syntaxe JavaScript
+        run: node --check collecte/static/app.js

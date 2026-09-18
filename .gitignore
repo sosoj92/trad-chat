@@ -36,6 +36,8 @@ config.local.*
 # --- Données privées : mes enregistrements (on entend l'appart, ma voix) ---
 # JAMAIS versionné.
 data/mon_chat/
+data/*
+!data/catmeows/
 
 # --- Datasets publics : on garde la structure des dossiers, pas les fichiers ---
 data/catmeows/*
@@ -57,7 +59,6 @@ __pycache__/
 *.py[cod]
 *.egg-info/
 .venv/
-uv.lock
 
 # --- Divers ---
 .DS_Store

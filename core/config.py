@@ -17,6 +17,7 @@ from __future__ import annotations
 
 from functools import lru_cache
 from pathlib import Path
+import re
 from typing import Any
 
 import yaml
@@ -51,19 +52,55 @@ def charger_config(chemin: str | Path | None = None) -> dict[str, Any]:
     if not fichier.exists():
         raise ErreurConfig(
             f"Config introuvable : {fichier}\n"
-            f"→ Crée-la à partir du modèle :  cp {_EXEMPLE.name} {_CONFIG.name}"
+            "→ Lance : uv run --no-sync python -m core.initialiser --nom-chat Moka"
         )
 
     try:
         with fichier.open("r", encoding="utf-8") as f:
             donnees = yaml.safe_load(f)
-    except yaml.YAMLError as exc:
-        raise ErreurConfig(f"YAML invalide dans {fichier} : {exc}") from exc
+    except yaml.YAMLError:
+        # Les messages du parseur peuvent reproduire la ligne contenant la clé.
+        raise ErreurConfig("YAML invalide : vérifier l'indentation de config.yaml (valeurs masquées).") from None
 
     if not isinstance(donnees, dict):
         raise ErreurConfig(f"Config vide ou mal formée : {fichier}")
 
     return donnees
+
+
+def token_sur(token: object) -> bool:
+    """Refuse la clé publique d'exemple ; ne renvoie et ne journalise aucun secret."""
+    return (isinstance(token, str) and token == token.strip()
+            and len(token) >= 16 and token != "CHANGE-MOI-token-secret")
+
+
+def valider_collecte(config: dict) -> None:
+    """Contrôles utiles pour une première installation et des catégories personnelles."""
+    if not isinstance(config, dict):
+        raise ErreurConfig("La configuration doit être un dictionnaire YAML.")
+    categories = config.get("labels", [])
+    if not isinstance(categories, list) or not categories or any(
+        not isinstance(l, str) or not re.fullmatch(r"[a-z][a-z0-9_]{0,39}", l) for l in categories
+    ):
+        raise ErreurConfig("Labels : utiliser des identifiants courts en minuscules, sans accent (ex. porte).")
+    if len(set(categories)) != len(categories):
+        raise ErreurConfig("Labels : une catégorie est répétée.")
+    if not {"autre", "incertain"}.issubset(categories):
+        raise ErreurConfig("Conserver les catégories autre et incertain.")
+    collecte = config.get("collecte", {})
+    if not isinstance(collecte, dict) or not token_sur(collecte.get("token")):
+        raise ErreurConfig("Clé absente, trop courte ou d'exemple. Voir docs/installation.md ; ne pas publier cette clé.")
+    port = collecte.get("port", 8771)
+    if isinstance(port, bool) or not isinstance(port, int) or not 1024 <= port <= 65535:
+        raise ErreurConfig("Le port de collecte doit être un entier entre 1024 et 65535.")
+    chat = config.get("chat", {})
+    nom = chat.get("nom", "Mon chat") if isinstance(chat, dict) else None
+    if not isinstance(nom, str) or not 1 <= len(nom.strip()) <= 60:
+        raise ErreurConfig("chat.nom doit contenir entre 1 et 60 caractères.")
+    chemins = config.get("chemins", {})
+    if not isinstance(chemins, dict) or any(not isinstance(chemins.get(c), str) or not chemins[c].strip()
+        for c in ("data_mon_chat", "data_catmeows", "models", "logs")):
+        raise ErreurConfig("Les quatre chemins de données, modèles et journaux doivent être renseignés.")
 
 
 def chemin_absolu(cle: str, config: dict[str, Any] | None = None) -> Path:

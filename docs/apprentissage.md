@@ -86,20 +86,21 @@ CV, calculés avec un `C` présélectionné, restent historiques et ne doivent p
 
 ## Commandes
 
-Depuis la racine, avec les dépendances ML déjà installées :
+Depuis la racine, avec les dépendances ML déjà installées selon le
+[guide d'installation](installation.md#6-facultatif--préparer-le-machine-learning) :
 
 ```powershell
 # Lecture seule : vérifier si le dataset permet les découpages
-.\.venv\Scripts\python.exe -m training.entrainement_mon_chat --verifier
+uv run --no-sync python -m training.entrainement_mon_chat --verifier
 
 # Entraîner / évaluer explicitement lorsque la collecte est suffisante
-.\.venv\Scripts\python.exe -m training.entrainement_mon_chat
+uv run --no-sync python -m training.entrainement_mon_chat
 
 # Évaluer un export décompressé dans un dossier distinct
-.\.venv\Scripts\python.exe -m training.entrainement_mon_chat --data CHEMIN_DU_DATASET
+uv run --no-sync python -m training.entrainement_mon_chat --data CHEMIN_DU_DATASET
 
 # Tests : uniquement des données synthétiques dans des dossiers temporaires
-.\.venv\Scripts\python.exe -m unittest discover -s tests -v
+uv run --no-sync python -m unittest discover -s tests -v
 ```
 
 Les expériences sont écrites dans `models/personnel/experience_<date>/`

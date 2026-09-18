@@ -5,11 +5,12 @@ traducteur déjà entraîné. Les fichiers restent sur ton PC.
 
 ## Lancer et ouvrir l'app
 
-Depuis la racine du projet :
+Première installation : suivre [le guide pas à pas](installation.md), qui
+crée une clé aléatoire et la configuration de son chat. Pour une installation
+déjà prête, depuis la racine du projet :
 
 ```powershell
-uv sync --group collecte
-uv run python -m collecte.serveur
+uv run --no-sync python -m collecte.serveur
 ```
 
 Le port configuré est 8771. Lancer **un seul processus / worker** sur le dossier
@@ -26,8 +27,9 @@ ngrok http 8771
 ```
 
 Ouvrir l'URL HTTPS affichée par ngrok, puis renseigner **Clé de connexion**.
-Un lien `https://TON-DOMAINE/?token=TA_CLE` fonctionne aussi. La clé est
-mémorisée dans ce navigateur et retirée de l'adresse après lecture.
+La clé est mémorisée dans ce navigateur. Les liens avec `?token=...` restent
+compatibles, mais leur usage est déconseillé : même retirée de l'adresse
+après lecture, la clé peut rester dans l'historique, les logs ou une capture.
 Ne pas partager le lien complet, la clé, les audios ou les exports privés.
 
 Sur iPhone : Safari → Partager → Sur l'écran d'accueil. Le navigateur et

@@ -1,95 +1,129 @@
-# 🐱 Traducteur de chat
+# 🐱 Trad Chat — un projet à refaire avec ton propre chat
 
-> Comprendre ce que raconte mon chat — un cran plus sérieusement qu'un gadget.
+Enregistre ses miaulements, annote ce que tu observes et découvre comment
+entraîner puis évaluer un petit modèle de machine learning personnalisé.
 
-**En une phrase :** pas de « traduction » magique, mais un **classifieur
-d'intentions de miaulements**. D'abord entraîné sur un dataset public, puis
-affiné sur **mon** chat grâce à une petite app mobile de labellisation, et
-finalement branché sur mon assistant vocal **Jarvis**.
+**Ce n'est pas un traducteur de langage félin.** C'est une expérience pour
+chercher si les sons permettent de reconnaître certains **contextes observés**,
+comme une demande devant la porte. Le résultat peut être décevant : apprendre
+à le mesurer fait partie du projet !
 
-L'idée de fond : les chats développent un « dialecte » propre avec leur humain.
-On ne vise donc pas un traducteur universel, mais un classifieur **personnalisé**.
+**Tu viens de la vidéo ?** Commence par le [guide d'installation](docs/installation.md),
+puis suis le [tutoriel éducatif](docs/tutoriel.md).
+Tu préfères être accompagné ? Voici le [prompt d'installation avec une IA](INSTALL_WITH_AI.md).
 
-## État du projet
+## Ce que tu peux faire aujourd'hui
 
-🚧 **Prototype** — collecte enrichie disponible ; protocole supervisé personnel préparé, pas encore de modèle personnel validé.
+- Utiliser une petite application web sur ton téléphone, avec ton ordinateur comme serveur.
+- Donner le nom de ton chat et choisir tes catégories, sans modifier le code.
+- Enregistrer, réécouter et corriger rapidement les annotations.
+- Garder tes audios et tes notes dans **ton installation privée**, pas sur ce GitHub.
+- Quand la collecte le permet, lancer explicitement une expérience d'apprentissage supervisé.
 
-| Phase | Sujet | État |
-|-------|-------|------|
-| 0 | Fondations (structure, config, conventions) | ✅ fait |
-| 1 | Baseline sur le dataset public CatMeows | ✅ fait (68 % acc — voir [docs/baseline.md](docs/baseline.md)) |
-| 2 | App mobile de collecte (PWA + serveur) | ✅ fait (voir [docs/collecte.md](docs/collecte.md)) |
-| 3 | Apprentissage supervisé sur mon chat | 🛠 pipeline préparé ; collecte / validation à réaliser ([protocole](docs/apprentissage.md)) |
-| 4 | Écoute temps réel sur le PC | ⬜ à venir |
-| 5 | Intégration Jarvis | ⬜ à venir |
+La collecte fonctionne **sans GPU, sans modèle à télécharger et sans clé d'API LLM**.
+L'ordinateur doit rester allumé pour recevoir les enregistrements. Ce dépôt
+n'est pas un service hébergé disponible en permanence.
 
-## Structure
+| Disponible | Encore expérimental / à construire |
+|---|---|
+| App de collecte et ré-étiquetage | Modèle personnel validé sur de futures journées |
+| Configuration propre à chaque installation | Seuil de confiance calibré et abstention |
+| Scripts d'évaluation audio / contexte | Détection et prédiction personnelles en temps réel |
+| Expériences historiques sur CatMeows | Intégration Jarvis et communication humain → chat |
 
-```
-chat-traducteur/
-├── collecte/     # Phase 2 — app mobile de collecte + serveur qui reçoit les audios
-├── core/         # utilitaires partagés : config centrale + journalisation
-├── data/         # datasets (gitignorés, structure conservée via .gitkeep)
-│   ├── catmeows/ #   dataset public (Phase 1)
-│   └── mon_chat/ #   MES enregistrements labellisés — JAMAIS versionné
-├── training/     # Phases 1 & 3 — scripts d'entraînement et d'évaluation
-├── inference/    # Phases 1 & 4 — détection + classification
-├── models/       # modèles entraînés (gitignorés, gros fichiers)
-├── docs/         # rapports (baseline.md, collecte.md, mon_chat_v1.md…)
-├── config.example.yaml   # modèle de config (versionné)
-├── config.yaml           # config réelle (NON versionnée — token, chemins…)
-└── pyproject.toml        # projet uv, Python 3.13
-```
+## Démarrage rapide sur ordinateur
 
-## Démarrage
-
-Sources du modèle, des données et articles : [ressources du projet](docs/ressources.md).
-Voir aussi les [notices tierces](THIRD_PARTY_NOTICES.md).
-
-Prérequis : [uv](https://docs.astral.sh/uv/) et Python 3.13.
+Prérequis : [Git](https://git-scm.com/downloads) et
+[uv](https://docs.astral.sh/uv/getting-started/installation/).
+Le projet utilise Python 3.13 ; uv peut l'installer si nécessaire.
+Commandes dans PowerShell sous Windows, ou dans un terminal sous macOS/Linux :
 
 ```bash
-# 1. Créer sa config à partir du modèle
-cp config.example.yaml config.yaml   # (Windows PowerShell : copy config.example.yaml config.yaml)
-
-# 2. Installer l'environnement de base
-uv sync
-
-# 3. Vérifier que tout est en place (résumé de la config + labels détectés)
-uv run python -m core.config
+git clone https://github.com/sosoj92/trad-chat.git
+cd trad-chat
+uv sync --locked --group collecte
+uv run --no-sync python -m core.initialiser --nom-chat Moka
+uv run --no-sync python -m core.diagnostic
+uv run --no-sync python -m collecte.serveur
 ```
 
-Les dépendances lourdes (ML, serveur) sont dans des **groupes optionnels**,
-installés au fil des phases :
+Remplace `Moka` par le nom de ton chat. L'initialisation crée `config.yaml`
+avec une clé aléatoire et **refuse d'écraser une configuration existante**.
+Elle ne touche pas aux enregistrements. Ouvre ensuite
+[l'app locale](http://127.0.0.1:8771).
+
+Dans un **deuxième terminal**, depuis le dossier du projet, affiche ta clé :
 
 ```bash
-uv sync --group training     # Phases 1 & 3
-uv sync --group collecte     # Phase 2
-uv sync --group temps-reel   # Phase 4
+uv run --no-sync python -m core.initialiser --afficher-cle
 ```
 
-## Conventions
+Colle-la dans « Clé de connexion ». **Ne filme et ne partage pas cette clé.**
+Pour le téléphone, il faut une adresse HTTPS : suis
+[la configuration de ton propre tunnel](docs/installation.md#4-ouvrir-sur-le-téléphone).
+N'utilise pas l'adresse ni la clé de la personne qui présente le projet.
 
-- **Config centrale** dans `config.yaml`, non versionnée, **aucun secret en
-  dur** dans le code.
-- **Données perso privées** : `data/mon_chat/`, `models/`, `logs/` et
-  `config.yaml` sont gitignorés dès le premier commit (on entend l'appart et
-  ma voix en fond sur les enregistrements).
-- **Labels dynamiques** : les catégories vivent dans `config.yaml`. En
-  ajouter/retirer suffit, le pipeline s'adapte au nombre de classes.
-- **Code en français**, docstrings soignées (publication open source possible,
-  sans les audios perso).
+## Le parcours pédagogique
 
-## Attentes honnêtes
+1. [Installer et réussir un premier enregistrement](docs/installation.md).
+2. [Adapter l'application à son chat](docs/personnalisation.md) : nom, catégories, port.
+3. [Apprendre à annoter](docs/tutoriel.md) : observation, hypothèse, incertitude, diversité.
+4. [Comprendre et lancer l'apprentissage](docs/apprentissage.md) : transfert, validation par journées, métriques.
+5. [Comparer avec les expériences publiques](docs/baseline.md), sans confondre leurs scores avec ceux de son chat.
 
-Le modèle tente d'associer un son à un **contexte observé**, pas de traduire
-des phrases ni de lire les pensées du chat. Aucune précision n'est garantie
-sur les futures journées. La qualité des annotations, leur diversité et une
-évaluation indépendante décideront si les prédictions sont utiles.
-Ce n'est **pas** un outil vétérinaire. Les corrections humaines constituent
-des données supervisées, pas une boucle de reinforcement learning.
+```text
+Un son + tes observations
+         ↓
+Collecte privée → correction / quarantaine
+         ↓
+Clips vérifiés répartis sur plusieurs journées
+         ↓
+PANNs (encodeur gelé) → classifieur supervisé léger
+         ↓
+Évaluation sur des journées non vues → utile ou pas ?
+```
 
-Les scripts comparent audio seul, contexte seul et audio + contexte. PANNs
-CNN14 reste le point de départ ; aucun gain avec Perch ou BEATs n'est encore
-démontré sur ce chat. La collecte ne lance ni entraînement ni déploiement
-automatique. Voir [le protocole](docs/apprentissage.md).
+Les corrections sont des **annotations humaines**, pas du reinforcement
+learning. Le modèle ne s'entraîne pas tout seul au fil des enregistrements.
+Il n'y a ni RAG ni génération de phrases dans le pipeline actuel.
+
+### Deux catégories à ne pas confondre
+
+| Catégorie | Signification | Entraînement |
+|---|---|---|
+| `autre` | Vocalise identifiable hors catégories : trille, feulement, gazouillis… | Admissible comme classe atypique si vérifiée |
+| `incertain` | Miaulement normal, contexte inconnu | **Toujours exclu**, en quarantaine |
+
+Un objectif de 30 clips par classe est un **repère de collecte**, pas une
+garantie de performance. Plusieurs journées, des annotations cohérentes et
+un test indépendant comptent davantage qu'un gros nombre de clips voisins.
+Ne provoque pas de stress ou d'inconfort pour remplir une catégorie.
+Ce projet n'est pas un outil vétérinaire.
+
+## Repères dans le code
+
+```text
+collecte/                  API FastAPI et application mobile web
+core/initialiser.py        Création sûre d'une configuration personnelle
+core/diagnostic.py         Vérifications locales, sans afficher de secret
+training/                  Datasets, modèles et évaluation supervisée
+inference/                 Inférence historique CatMeows ; pas l'app personnelle
+tests/                     Tests isolés avec données synthétiques
+docs/                      Guides et rapports pédagogiques
+config.example.yaml        Modèle public ; config.yaml reste privé
+uv.lock                    Versions des dépendances pour reproduire l'installation
+```
+
+## Ressources, confidentialité et contribution
+
+- [Modèles, données, articles et liens officiels](docs/ressources.md).
+- [Notice d'utilisation quotidienne](docs/collecte.md) et [dépannage](docs/depannage.md).
+- [Ce qui doit rester privé](docs/confidentialite.md) et [sécurité](SECURITY.md).
+- [Contribuer et lancer les tests](CONTRIBUTING.md).
+- [Licences et conditions des ressources tierces](THIRD_PARTY_NOTICES.md).
+
+Les données CatMeows et les poids PANNs ne sont pas livrés avec ce dépôt.
+Consulte leurs conditions avant téléchargement ou réutilisation ; les
+conditions du code, du dataset et des modèles sont distinctes.
+Chaque personne collecte ses propres données. **Un dossier de projet = un chat** :
+il n'y a pas encore de gestion multi-chat dans une même installation.
