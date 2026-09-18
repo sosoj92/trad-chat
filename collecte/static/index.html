@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#12141c">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Miaou">
+<link rel="apple-touch-icon" href="/static/icon-180.png">
+<title>Collecte 🐱</title>
+<style>
+  :root { --bg:#12141c; --carte:#1c1f2b; --carte2:#242838; --txt:#eef1f7; --gris:#9aa3b8;
+          --accent:#ff7a59; --ok:#3ddc84; --danger:#ff5470; --bord:#2e3345; }
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body { margin:0; background:var(--bg); color:var(--txt); font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+         padding:env(safe-area-inset-top) 16px calc(env(safe-area-inset-bottom) + 16px); max-width:560px; margin:0 auto; }
+  h1 { font-size:20px; margin:16px 0 4px; display:flex; align-items:center; gap:8px; }
+  .sous { color:var(--gris); font-size:13px; margin:0 0 16px; }
+  .carte { background:var(--carte); border:1px solid var(--bord); border-radius:16px; padding:16px; margin-bottom:16px; }
+  button { font-family:inherit; cursor:pointer; border:none; border-radius:14px; color:var(--txt); }
+  .plein { width:100%; padding:16px; font-size:17px; font-weight:600; background:var(--carte2); border:1px solid var(--bord); }
+  .plein:active { transform:scale(.99); }
+  /* gros bouton d'enregistrement */
+  #btnRec { width:180px; height:180px; border-radius:50%; margin:8px auto; display:flex; flex-direction:column;
+            align-items:center; justify-content:center; gap:6px; font-size:20px; font-weight:700;
+            background:radial-gradient(circle at 50% 40%, #2a2f42, #1a1d29); border:3px solid var(--accent); }
+  #btnRec .pt { width:26px; height:26px; border-radius:50%; background:var(--accent); }
+  #btnRec.rec { border-color:var(--danger); animation:puls 1s infinite; }
+  #btnRec.rec .pt { border-radius:6px; background:var(--danger); }
+  @keyframes puls { 0%,100%{box-shadow:0 0 0 0 rgba(255,84,112,.5)} 50%{box-shadow:0 0 0 16px rgba(255,84,112,0)} }
+  .centre { text-align:center; }
+  .timer { font-variant-numeric:tabular-nums; color:var(--gris); font-size:15px; }
+  /* tuiles de labels */
+  .tuiles { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; }
+  .tuile { padding:20px 8px; font-size:17px; font-weight:600; background:var(--carte2); border:1px solid var(--bord); text-align:center; }
+  .tuile:active { background:var(--accent); }
+  /* compteurs */
+  .compteurs { display:flex; flex-wrap:wrap; gap:8px; }
+  .puce { background:var(--carte2); border:1px solid var(--bord); border-radius:999px; padding:6px 12px; font-size:13px; }
+  .puce b { color:var(--accent); }
+  /* récents */
+  .rec-item { display:flex; align-items:center; gap:10px; padding:10px 0; border-top:1px solid var(--bord); }
+  .rec-item:first-child { border-top:none; }
+  .rec-meta { flex:1; min-width:0; }
+  .rec-meta .lbl { font-weight:600; }
+  .rec-meta .sub { color:var(--gris); font-size:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .mini { padding:8px 10px; font-size:13px; background:var(--carte2); border:1px solid var(--bord); }
+  .mini.danger { color:var(--danger); }
+  select { font-family:inherit; background:var(--carte2); color:var(--txt); border:1px solid var(--bord); border-radius:10px; padding:8px; }
+  input[type=text] { width:100%; padding:12px; border-radius:12px; background:var(--carte2); border:1px solid var(--bord); color:var(--txt); font-size:15px; }
+  /* ré-étiquetage rapide (2 taps) */
+  .lbl-chip { background:var(--carte2); border:1px solid var(--bord); border-radius:10px;
+              padding:6px 10px; font-weight:600; font-size:14px; color:var(--txt); }
+  .relabel-picker { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; padding:10px 0 4px; }
+  .tuile-mini { padding:12px 6px; font-size:14px; background:var(--carte2); border:1px solid var(--bord); }
+  .tuile-mini:active { background:var(--accent); }
+  .tuile-mini.actif { border-color:var(--accent); color:var(--accent); }
+  /* compteur : quarantaine grisée, à part */
+  .puce.quarantaine { opacity:.45; border-style:dashed; }
+  .compteurs .sep { flex-basis:100%; height:0; }
+  .cache { display:none !important; }
+  .msg { padding:10px 12px; border-radius:12px; font-size:14px; margin-bottom:12px; }
+  .msg.warn { background:rgba(255,122,89,.15); border:1px solid var(--accent); }
+  .msg.err { background:rgba(255,84,112,.15); border:1px solid var(--danger); }
+  .msg.ok { background:rgba(61,220,132,.12); border:1px solid var(--ok); }
+  audio { width:100%; margin-top:10px; }
+  .lien { color:var(--accent); }
+  input, textarea { font:inherit; width:100%; border:1px solid var(--bord); border-radius:10px; padding:10px; color:var(--txt); background:var(--carte2); }
+  label.champ { display:block; font-size:14px; margin:12px 0; }
+  label.champ input, label.champ textarea, label.champ select { display:block; width:100%; margin-top:6px; font-size:16px; }
+  details { margin:14px 0; } summary { cursor:pointer; padding:8px 0; color:var(--accent); }
+  .filtres { display:flex; gap:8px; margin:12px 0; } .filtres > * { min-width:0; flex:1; }
+  .mini { min-height:44px; } .puce.quarantaine { opacity:.75; }
+  .lbl-chip, .tuile-mini { min-height:44px; }
+  .puce small { color:var(--gris); } .rec-meta .sub { white-space:normal; }
+  button:disabled { opacity:.5; cursor:wait; }
+  dialog { background:var(--carte); color:var(--txt); border:1px solid var(--bord); border-radius:16px; width:min(94vw,520px); max-height:90vh; overflow:auto; }
+  dialog::backdrop { background:#000a; } dialog h2 { font-size:18px; }
+</style>
+</head>
+<body>
+  <h1>🐱 Collecte de miaulements</h1>
+  <p class="sous" id="sousTitre">Un son, une observation. Construisons un jeu de données fiable.</p>
+
+  <div id="zoneMsg" role="status" aria-live="polite"></div>
+  <form class="carte cache" id="connexion">
+    <label for="tokenConnexion">Clé de connexion</label>
+    <p class="sous">Colle la clé fournie avec ton lien pour connecter cette app.</p>
+    <input id="tokenConnexion" type="password" autocomplete="off" autocapitalize="none" spellcheck="false" required>
+    <button class="plein" type="submit" style="margin-top:12px">Se connecter</button>
+  </form>
+
+  <!-- Étape 0 : activer le micro (obligatoire, geste utilisateur) -->
+  <div class="carte centre" id="carteMicro">
+    <button class="plein" id="btnMicro">🎙️ Activer le micro</button>
+    <p class="sous" style="margin:12px 0 0">Une fois activé, un pré-tampon garde les dernières secondes :
+       tu peux enregistrer le miaulement qui vient juste de se produire.</p>
+  </div>
+
+  <!-- Étape 1 : enregistrer -->
+  <div class="carte centre cache" id="carteRec">
+    <button id="btnRec"><span class="pt"></span><span id="btnRecTxt">Enregistrer</span></button>
+    <div class="timer" id="timer">prêt</div>
+    <button class="mini" id="btnMicroOff" style="margin-top:16px">Désactiver le micro</button>
+  </div>
+
+  <!-- Étape 2 : étiqueter -->
+  <div class="carte cache" id="carteLabel">
+    <div class="centre" style="margin-bottom:10px;font-weight:600">Quel miaulement ?</div>
+    <audio id="preview" controls></audio>
+    <div id="annotationCapture"></div>
+    <p class="sous">Choisis le contexte supposé pour sauvegarder. « Incertain » reste en quarantaine.</p>
+    <div class="tuiles" id="tuiles" style="margin:14px 0"></div>
+    <p id="etatEnvoi" class="sous"></p>
+    <button class="plein" id="btnAnnuler" style="margin-top:12px">Annuler</button>
+  </div>
+
+  <!-- Compteurs -->
+  <div class="carte">
+    <div style="font-weight:600;margin-bottom:10px">Collecté <span id="total" class="lien"></span></div>
+    <p id="bilan" class="sous"></p>
+    <div class="compteurs" id="compteurs"></div>
+    <p class="sous" style="margin-top:12px">30 par catégorie : repère de collecte, pas garantie de fiabilité. Varie les journées et les situations.</p>
+  </div>
+
+  <!-- Récents -->
+  <div class="carte">
+    <div style="font-weight:600;margin-bottom:6px">Derniers enregistrements</div>
+    <div class="filtres">
+      <select id="filtreLabel" aria-label="Filtrer par catégorie"><option value="">Toutes les catégories</option></select>
+      <select id="filtreEtat" aria-label="Filtrer par statut">
+        <option value="">Actifs</option><option value="a_verifier">À vérifier / incertains</option><option value="corbeille">Corbeille</option>
+      </select>
+    </div>
+    <p id="tailleListe" class="sous"></p>
+    <div id="recents"></div>
+  </div>
+
+<div class="carte">
+    <strong>Préparer l’apprentissage</strong>
+    <p class="sous" style="margin-top:8px">La collecte ne lance pas d’entraînement. Les anciens clips doivent être vérifiés avant d’entrer dans le dataset. L’audio original est toujours conservé.</p>
+    <button class="plein" id="exportTrain">Exporter le dataset étiqueté</button>
+    <button class="plein" id="exportBackup" style="margin-top:8px">Sauvegarde complète</button>
+  </div>
+  <dialog id="edition">
+    <form id="formEdition">
+      <h2>Observation et extrait</h2>
+      <audio id="editPreview" controls></audio>
+      <div id="annotationEdition"></div>
+      <div class="filtres">
+        <button class="plein" type="submit">Enregistrer</button>
+        <button class="plein" id="fermerEdition" type="button">Fermer</button>
+      </div>
+    </form>
+  </dialog>
+<script src="/static/app.js?v=2" defer></script>
+</body>
+</html>

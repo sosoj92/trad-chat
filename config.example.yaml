@@ -1,0 +1,114 @@
+# ============================================================================
+#  Configuration centrale du projet « traducteur de chat »
+# ----------------------------------------------------------------------------
+#  Ce fichier est le MODÈLE versionné. Pour l'utiliser :
+#      cp config.example.yaml config.yaml
+#  puis on édite config.yaml (jamais commité — il contient le token, etc.).
+#  Aucun secret en dur dans le code : tout passe par ici.
+# ============================================================================
+
+projet:
+  nom: "chat-traducteur"
+  version: "0.1.0"
+
+# ----------------------------------------------------------------------------
+#  LABELS — les catégories d'intentions à classer.
+#  Liste librement modifiable : tout le pipeline s'adapte dynamiquement au
+#  nombre de classes (la tête du modèle, les métriques, l'app de collecte…).
+#  Ajoute/retire une ligne et relance — pas besoin de toucher au code.
+# ----------------------------------------------------------------------------
+labels:
+  - faim
+  - porte
+  - calin
+  - jeu
+  - mecontent
+  - douleur_alerte
+  - nuit
+  - autre          # vocalise identifiable mais hors catégories (trille, feulement…) → négatif/atypique à l'entraînement
+  - incertain      # miaulement normal, contexte inconnu → QUARANTAINE, exclu de l'entraînement (voir labels_exclus)
+
+# ----------------------------------------------------------------------------
+#  CHEMINS — relatifs à la racine du projet (résolus en absolu par le code).
+# ----------------------------------------------------------------------------
+chemins:
+  data_catmeows: "data/catmeows"   # dataset public (Phase 1)
+  data_mon_chat: "data/mon_chat"   # mes enregistrements labellisés (Phase 2+)
+  models: "models"                 # modèles entraînés
+  logs: "logs"                     # journaux d'exécution
+
+# ----------------------------------------------------------------------------
+#  AUDIO — prétraitement et features (utilisé dès la Phase 1).
+# ----------------------------------------------------------------------------
+audio:
+  sample_rate: 16000     # Hz — on ramène tout en 16 kHz mono
+  mono: true
+  duree_max_s: 4.0       # durée max d'un extrait (padding/troncature)
+  trim_silence: true     # rogner les silences en début/fin
+  trim_top_db: 30        # seuil du trim (dB sous le pic)
+  # Spectrogramme mel
+  n_fft: 1024
+  hop_length: 256
+  n_mels: 64
+  fmin: 50               # les miaulements montent haut : on garde large
+  fmax: 8000
+
+# ----------------------------------------------------------------------------
+#  AUGMENTATION — cruciale vu la petite taille des datasets (Phases 1 & 3).
+# ----------------------------------------------------------------------------
+augmentation:
+  active: true
+  proba: 0.5              # chaque augmentation ne s'applique qu'à 50 % (anti sous-apprentissage)
+  time_shift: true
+  pitch_shift: true       # léger
+  pitch_shift_demi_tons: 1.0
+  bruit_de_fond: true
+  bruit_niveau: 0.005
+  spec_augment: true
+
+# ----------------------------------------------------------------------------
+#  ENTRAÎNEMENT (Phases 1 & 3). device: auto | cuda | cpu
+# ----------------------------------------------------------------------------
+entrainement:
+  device: "auto"
+  seed: 42
+  batch_size: 16         # adapté à un GPU ~6 Go — baisser si OOM
+  epochs: 50
+  learning_rate: 0.001
+  early_stopping_patience: 8
+  # Split PROPRE : par CHAT et pas par enregistrement (évite la fuite de données)
+  split_par: "chat"
+  val_ratio: 0.15
+  test_ratio: 0.15
+  # Labels mis en quarantaine : exclus de l'entraînement par défaut (Phase 3).
+  # "incertain" = contexte inconnu, en attente de ré-étiquetage / calibration seuil.
+  labels_exclus:
+    - incertain
+
+# ----------------------------------------------------------------------------
+#  COLLECTE — serveur FastAPI + PWA (Phase 2).
+# ----------------------------------------------------------------------------
+collecte:
+  host: "0.0.0.0"        # écoute sur le wifi local
+  port: 8771             # éviter 8770 si Jarvis tourne déjà dessus
+  # Token simple exigé dans l'en-tête/URL pour ne pas être ouvert à internet
+  # via ngrok. À CHANGER dans config.yaml (ne pas laisser cette valeur).
+  token: "CHANGE-MOI-token-secret"
+  pre_buffer_s: 5.0      # pré-tampon pour capter le miaulement déjà passé
+  # Domaine ngrok statique (réutilise celui de Jarvis si pertinent). Vide = off.
+  ngrok_domaine: ""
+
+# ----------------------------------------------------------------------------
+#  TEMPS RÉEL — écoute continue (Phase 4).
+# ----------------------------------------------------------------------------
+temps_reel:
+  micro: null            # index du périphérique (null = défaut système)
+  seuil_confiance: 0.6   # en dessous → classe "incertain"
+  cooldown_s: 20         # regroupe les miaulements rapprochés en 1 événement
+
+# ----------------------------------------------------------------------------
+#  JOURNALISATION
+# ----------------------------------------------------------------------------
+journalisation:
+  niveau: "INFO"         # DEBUG | INFO | WARNING | ERROR
+  fichier: "chat-traducteur.log"

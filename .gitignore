@@ -1,0 +1,65 @@
+# --- Config perso (contient le token de collecte, chemins locaux, etc.) ---
+config.yaml
+config.yaml.*
+config.local.*
+.env
+.env.*
+!.env.example
+
+# --- Réglages locaux et historiques des assistants ---
+.claude/
+.codex/
+.agents/
+.vscode/
+.idea/
+
+# --- Captures et exports privés, même copiés hors de data/mon_chat ---
+*.wav
+*.mp3
+*.m4a
+*.ogg
+*.flac
+*.webm
+*.mp4
+*.jsonl
+*.zip
+*.7z
+*.tar
+*.tar.gz
+*.pem
+*.key
+*.p12
+*.pfx
+.backups/
+.trash/
+
+# --- Données privées : mes enregistrements (on entend l'appart, ma voix) ---
+# JAMAIS versionné.
+data/mon_chat/
+
+# --- Datasets publics : on garde la structure des dossiers, pas les fichiers ---
+data/catmeows/*
+!data/catmeows/.gitkeep
+
+# --- Modèles entraînés (gros fichiers binaires) ---
+models/*
+!models/.gitkeep
+
+# --- Logs ---
+logs/*
+!logs/.gitkeep
+
+# --- Artefacts d'évaluation générés (chemins locaux, régénérés à chaque run) ---
+docs/*_mal_classes.csv
+
+# --- Python / uv ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+uv.lock
+
+# --- Divers ---
+.DS_Store
+Thumbs.db
+.ipynb_checkpoints/
