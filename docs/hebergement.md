@@ -1,144 +1,237 @@
-# Utiliser l'app sur son téléphone : ngrok, Vercel ou Netlify ?
+# Mettre l'application sur votre téléphone pour enregistrer votre chat
 
-**Deux objectifs différents :**
+Vous souhaitez avoir une application sur votre téléphone, appuyer sur
+« Enregistrer » quand votre chat miaule et retrouver les sons plus tard ?
+Ce guide vous explique **où l'application fonctionne, comment l'ouvrir
+sur le téléphone et comment la retrouver le lendemain**.
 
-- Utiliser **l'application de ce dépôt dès maintenant** sur son téléphone :
-  suivre le [parcours ngrok](#a--le-parcours-actuel--ordinateur--ngrok).
-- Utiliser l'app **sans laisser son ordinateur allumé** : il faut d'abord
-  construire la [variante cloud](#b--sans-ordinateur-allumé--préparer-une-variante-cloud),
-  puis la publier sur Vercel ou Netlify. Cette variante **n'est pas encore implémentée ici**.
+Il part de zéro : vous n'avez pas besoin de connaître les mots *serveur*,
+*hébergement* ou *ngrok*.
 
-Le téléphone affiche la page et capture le micro. Il n'héberge pas le serveur
-Python. « Ajouter à l'écran d'accueil » crée un raccourci d'app web, pas un
-serveur autonome ni une app native distribuée sur un store.
+## Qu'est-ce que « héberger une application » veut dire ?
 
-## Choisir son parcours
+Il faut un ordinateur quelque part pour faire tourner le programme qui
+reçoit les enregistrements et les sauvegarde. **Héberger**, c'est faire
+fonctionner ce programme sur une machine accessible aux appareils qui
+l'utilisent. Le programme qui répond au téléphone s'appelle un **serveur**.
 
-| Solution | Où sont les données ? | PC nécessaire pendant la collecte ? | Compatible avec ce dépôt tel quel ? |
-|---|---|---|---|
-| FastAPI sur le PC + ngrok | Disque du PC ; trafic relayé par ngrok | Oui | Oui |
-| Vercel + stockage/base externes | Services cloud privés à configurer | Non, après adaptation | Non : stockage et configuration à adapter |
-| Netlify + stockage/base externes | Services cloud privés à configurer | Non, après adaptation | Non : frontend et accès aux données à adapter |
+Dans la version actuelle, cette machine est **votre ordinateur** :
 
-Le code actuel écrit les WAV et `manifest.jsonl` sur disque dans
-`collecte/stockage.py`, lit sa configuration privée dans `config.yaml`, et
-appelle `/api/...` sur le même site que l'interface. Un verrou protège un
-seul processus, pas plusieurs instances cloud.
+- Le téléphone affiche les boutons et capte le son avec son microphone.
+- Le programme sur votre ordinateur reçoit le son et le conserve sur le disque.
+- Un service nommé **ngrok** permet de les relier par une adresse Internet sécurisée.
 
-Conséquence : **une page qui s'affiche ne prouve pas que l'app fonctionne**.
-Publier seulement `collecte/static` ne fournit ni les routes API ni le
-stockage. Copier le manifest dans `/tmp` ne le rend pas durable.
+ngrok ne déplace pas votre application sur ses serveurs : il **relaie la
+connexion** vers votre ordinateur. On appelle cette liaison un *tunnel*.
+Voilà pourquoi le PC doit rester allumé et connecté pour recevoir les sons.
 
-## A — Le parcours actuel : ordinateur + ngrok
+Une adresse **HTTPS** chiffre le transport des données. Elle permet aussi
+au navigateur du téléphone d'utiliser le microphone, avec votre autorisation.
+Cela ne signifie pas que les fichiers enregistrés sur le disque sont chiffrés par l'app.
 
-### A1. Installer l'app une fois
+## Ce que vous allez obtenir
 
-Suis d'abord [l'installation sur ordinateur](installation.md). Elle explique
-Git, uv, la configuration personnelle et la clé de connexion.
-Si ton app fonctionne déjà localement, **ne recrée pas ton installation**.
+Vous ouvrirez une adresse dans Safari ou Chrome, puis pourrez l'ajouter à
+l'écran d'accueil comme une app. C'est une **application web progressive**
+(*PWA*), pas une application à chercher dans l'App Store ou Google Play.
+Le raccourci n'installe pas le serveur sur le téléphone et ne rend pas
+toute l'application utilisable sans connexion.
 
-Dans un terminal ouvert dans le dossier du projet :
+**Pour commencer aujourd'hui : suivez la partie A ci-dessous.**
+La [partie B](#b--sans-ordinateur-allumé--préparer-une-variante-cloud) explique
+une autre possibilité : louer ou utiliser la machine d'un prestataire,
+souvent appelée hébergement *cloud*, pour ne plus laisser le PC allumé.
+Cette variante demande une adaptation qui n'est pas encore réalisée ici.
+
+## A — Installer l'application sur le téléphone avec votre ordinateur
+
+### A1. Préparer et lancer l'app sur l'ordinateur
+
+Si c'est votre première installation, suivez les étapes 1 à 3 du
+[guide d'installation débutant](installation.md). Elles expliquent comment
+télécharger les fichiers et ouvrir un **terminal**, la fenêtre dans laquelle
+on tape les commandes.
+
+Si l'app fonctionne déjà sur votre PC, gardez cette installation.
+Ne recréez ni dossier ni clé, et ne fermez pas le serveur déjà lancé.
+
+Pour lancer un serveur arrêté, ouvrez le terminal **dans le dossier du
+projet**, puis exécutez :
 
 ```bash
-uv run --no-sync python -m core.diagnostic
 uv run --no-sync python -m collecte.serveur
 ```
 
-Laisse ce terminal ouvert. Sur le PC, visite
-[http://127.0.0.1:8771](http://127.0.0.1:8771). Si tu as changé le port dans
-`config.yaml`, utilise ce port partout dans la suite.
+**Résultat attendu :** le programme reste actif dans cette fenêtre.
+Sur le PC, [http://127.0.0.1:8771](http://127.0.0.1:8771) affiche la page de collecte.
+Gardez ce premier terminal ouvert.
 
-### A2. Configurer son propre compte ngrok
+`8771` est le **port**, un numéro qui permet de joindre le bon programme.
+Si vous l'avez changé dans vos réglages, utilisez votre numéro à chaque étape.
+L'adresse `127.0.0.1` désigne l'appareil qui l'ouvre : elle ne permet pas
+au téléphone de trouver votre PC.
 
-Crée un compte et installe l'agent depuis le
-[guide officiel ngrok](https://ngrok.com/docs/getting-started/).
-Exécute **localement et hors vidéo** la commande d'association à ton compte
-fournie par son tableau de bord. Elle contient ton authtoken ngrok : ne le
-mets ni dans ce dépôt ni dans une conversation publique.
+### A2. Installer le service qui donnera une adresse à l'app
 
-Il y a deux secrets distincts :
+1. Sur l'ordinateur, ouvrez le [site officiel ngrok](https://ngrok.com/docs/getting-started/).
+2. Créez votre propre compte et choisissez une offre adaptée à votre usage.
+   Une offre gratuite existe avec des limites ; aucun forfait payant n'est nécessairement requis pour cet essai.
+3. Installez le logiciel ngrok pour votre système en suivant ses instructions.
+   Pour Windows : [page officielle de téléchargement](https://ngrok.com/download/windows).
+4. Ouvrez un **deuxième terminal**, sans fermer celui du serveur.
+5. Tapez `ngrok version`, puis Entrée.
 
-- **Authtoken ngrok** : associe l'agent installé sur le PC à ton compte ngrok.
-- **Clé de collecte** : protège tes audios dans l'application.
+**Résultat attendu :** un numéro de version. Si la commande est introuvable,
+terminez l'installation de ngrok et rouvrez le deuxième terminal avant la suite.
 
-N'utilise pas la clé ou le domaine de l'autrice, ni ceux montrés dans une vidéo.
-Ne remplace pas le tunnel d'un autre projet : vérifie d'abord ce qui fonctionne
-déjà et les limites de ton compte.
+Votre compte ngrok fournit un code secret pour associer le logiciel à votre
+compte. Le site l'appelle **authtoken**. Dans le tableau de bord ngrok,
+copiez la commande d'association proposée, puis exécutez-la localement.
+Elle a la forme suivante ; le texte entre guillemets doit être remplacé par
+**votre code ngrok**, sans nous l'envoyer :
 
-### A3. Ouvrir le tunnel
+```bash
+ngrok config add-authtoken "VOTRE_CODE_NGROK_A_REMPLACER"
+```
 
-Dans un deuxième terminal :
+Faites cette étape **hors vidéo et hors partage d'écran**.
+Ce code est différent de la clé de connexion de l'application :
+
+| Code | À quoi sert-il ? | Où l'utiliser ? |
+|---|---|---|
+| Authtoken ngrok | Relier le logiciel ngrok à votre compte | Dans la commande d'association sur le PC |
+| Clé de collecte | Protéger l'accès aux sons de votre chat | Dans « Clé de connexion » sur la page de l'app |
+
+**Résultat attendu :** ngrok confirme l'enregistrement de son code.
+Si vous utilisez déjà ngrok pour un autre projet, ne changez pas sa configuration
+et n'arrêtez pas ses connexions sans vérifier ce qui est déjà utilisé.
+
+### A3. Créer l'adresse à ouvrir sur le téléphone
+
+Toujours dans le deuxième terminal :
 
 ```bash
 ngrok http 8771
 ```
 
-Copie l'adresse **HTTPS** affichée par ngrok, sans lui ajouter de clé dans
-l'URL. Ouvre-la sur le téléphone. S'il y a une page d'avertissement ngrok,
-continue seulement après avoir vérifié que c'est bien ton adresse.
+**Résultat attendu :** ngrok affiche une adresse commençant par `https://`
+et une liaison vers le port `8771`. Ce programme reste actif lui aussi.
+
+Ouvrez **l'adresse HTTPS affichée** dans le navigateur du téléphone.
+N'utilisez pas l'adresse d'une capture d'écran ou celle de la personne
+qui présente le projet. S'il y a un avertissement ngrok, vérifiez que
+l'adresse est bien la vôtre avant de continuer.
 
 L'offre gratuite fournit actuellement un domaine de développement lié au
-compte, avec des quotas. Le domaine peut donc rester identique : il ne faut
-pas supposer qu'il change à chaque lancement. Vérifie toujours l'adresse
-réellement affichée. Sources : [limites et domaine gratuits ngrok](https://ngrok.com/docs/pricing-limits/free-plan-limits).
+compte, c'est-à-dire un nom d'adresse attribué par ngrok. Il peut rester
+identique entre deux lancements ; fiez-vous à ce que votre logiciel affiche,
+pas à l'idée qu'il change forcément à chaque fois.
+[Source : domaine et limites ngrok](https://ngrok.com/docs/pricing-limits/free-plan-limits).
 
-### A4. Se connecter depuis le téléphone
+Si le téléphone affiche la page de connexion de l'app, la liaison est établie.
+Sinon, vérifiez d'abord que l'app s'ouvre encore sur le PC.
 
-Dans un autre terminal ouvert dans le dossier du projet, affiche la clé de
-collecte **hors capture d'écran** :
+### A4. Vous connecter et enregistrer un premier son
+
+Pour retrouver la clé de **l'application**, ouvrez au besoin un troisième
+terminal dans le dossier du projet. Sans fermer les deux autres, lancez
+cette commande hors vidéo :
 
 ```bash
 uv run --no-sync python -m core.initialiser --afficher-cle
 ```
 
-Saisis-la dans « Clé de connexion » sur le téléphone. N'y mets pas l'authtoken
-ngrok. Autorise le microphone quand tu veux faire un test.
+Sur le téléphone, saisissez la clé dans « Clé de connexion ».
+Ne mettez pas la clé dans l'adresse Internet et ne la publiez pas.
+N'utilisez pas le code ngrok à sa place.
 
-Fais un court essai avec ta propre voix, choisi comme **Bruit / non-vocalise**.
-Enregistre-le, vérifie la réécoute dans les derniers enregistrements après
-rechargement, puis mets ce clip de test à la corbeille. Il ne doit pas devenir
-un exemple de chat pour l'entraînement.
+Choisissez d'activer le microphone et acceptez la permission dans le navigateur.
+Faites un court essai avec votre propre voix, puis arrêtez. Choisissez
+**Bruit / non-vocalise** pour que cet essai ne serve pas à entraîner le modèle
+de chat. Sauvegardez, rechargez la page et réécoutez le clip depuis
+« Derniers enregistrements », puis mettez-le à la corbeille.
+
+**Résultat attendu :** vous retrouvez le son après rechargement.
+Vous pouvez maintenant commencer à enregistrer votre chat dans sa vie
+normale, en suivant [les conseils de collecte](collecte.md).
 
 ### A5. Ajouter l'app à l'écran d'accueil
 
-- **iPhone** : ouvre l'adresse dans Safari, puis Partager → Sur l'écran d'accueil.
-- **Android** : dans un navigateur compatible, cherche « Installer l'application »
+- **iPhone** : ouvrez l'adresse dans Safari, puis Partager → Sur l'écran d'accueil.
+- **Android** : dans un navigateur compatible, cherchez « Installer l'application »
   ou « Ajouter à l'écran d'accueil ». Le libellé dépend du navigateur.
 
-Ouvre le raccourci et reconnecte-toi si nécessaire. Garde l'app au premier
-plan pendant la capture : le micro est arrêté quand elle passe en arrière-plan.
-Sur téléphone, utilise HTTPS ; une IP du PC en HTTP n'est pas équivalente.
+Ouvrez le raccourci et reconnectez-vous si nécessaire. Le navigateur et le
+raccourci peuvent mémoriser la clé séparément. Gardez l'app au premier plan
+pendant la capture : le micro s'arrête lorsqu'elle passe en arrière-plan.
+
+**Résultat attendu :** une icône permet de rouvrir l'app facilement.
+Cela ne supprime pas le besoin d'un PC allumé.
 
 ### A6. Revenir le lendemain
 
-Il faut garder l'ordinateur allumé, connecté, sans mise en veille, et les
-deux processus actifs : serveur de collecte et ngrok. S'ils sont arrêtés,
-relance `uv run --no-sync python -m collecte.serveur`, puis `ngrok http 8771`.
-Inutile de relancer l'installation des dépendances ou de créer une nouvelle clé.
+Gardez l'ordinateur allumé, connecté et sans mise en veille, ainsi que les
+deux programmes actifs : le serveur de collecte et ngrok.
 
-Une erreur ngrok de type endpoint hors ligne se vérifie dans cet ordre :
+S'ils sont arrêtés, relancez dans deux terminaux distincts :
 
-1. L'app fonctionne-t-elle sur `http://127.0.0.1:8771` **sur le PC** ?
-2. Le bon tunnel fonctionne-t-il vers le bon port ?
-3. Le téléphone ouvre-t-il exactement l'adresse HTTPS actuelle ?
-4. Si la page s'affiche mais refuse la connexion : utilises-tu la clé de cette installation ?
+```bash
+uv run --no-sync python -m collecte.serveur
+```
 
-Une actualisation du téléphone ne rallume pas le PC. Ne tue pas tous les
-processus Python ou tous les tunnels pour dépanner.
-Voir aussi [le dépannage détaillé](depannage.md).
+```bash
+ngrok http 8771
+```
 
-### A7. Coût et sauvegardes
+La première commande doit partir du dossier du projet. Il n'est pas
+nécessaire de retélécharger le code, réinstaller Python ou créer une autre clé.
+Ouvrez l'adresse HTTPS actuelle sur le téléphone ; si elle a changé,
+remplacez éventuellement l'ancien raccourci.
 
-Cette méthode peut utiliser l'offre gratuite ngrok **dans ses limites** ;
-ce n'est ni un hébergement permanent garanti ni un trafic illimité. Les
-réécoutes et les exports consomment aussi du transfert. Vérifie l'usage dans
-ton compte et les [conditions actuelles](https://ngrok.com/docs/pricing-limits/free-plan-limits).
+Une erreur de type « site hors ligne » se vérifie dans cet ordre :
 
-Les audios sont stockés sur ton PC, mais transitent par ngrok. Fais des
-sauvegardes privées régulières ; pour conserver aussi la quarantaine,
-choisis la sauvegarde complète, pas seulement l'export d'entraînement.
+1. L'app s'ouvre-t-elle à l'adresse locale **sur le PC** ?
+2. ngrok fonctionne-t-il et vise-t-il le même port que le serveur ?
+3. Le téléphone ouvre-t-il l'adresse HTTPS actuellement affichée ?
+4. Si seule la connexion est refusée, utilisez-vous la clé de cette installation ?
+
+Une actualisation du téléphone ne rallume pas le PC. N'arrêtez pas tous les
+programmes Python ou tous les tunnels pour dépanner.
+Voir [le dépannage détaillé](depannage.md).
+
+### A7. Garder ses sons privés et comprendre les limites du gratuit
+
+Cette méthode peut utiliser l'offre gratuite ngrok **dans ses limites**.
+Les réécoutes et les exports consomment aussi du transfert de données.
+Vérifiez l'usage dans votre compte et les
+[conditions actuelles](https://ngrok.com/docs/pricing-limits/free-plan-limits).
+
+Les fichiers sont conservés sur votre PC, mais transitent par le prestataire
+ngrok. Ne partagez ni vos clés ni les liens qui les contiennent.
+Faites régulièrement une sauvegarde privée de la collecte. Pour conserver
+aussi les sons `incertain`, choisissez **sauvegarde complète**, et non
+seulement export d'entraînement.
+
+Vous pouvez vous arrêter ici : **la partie suivante n'est pas nécessaire
+pour enregistrer votre chat avec la version actuelle.**
 
 ## B — Sans ordinateur allumé : préparer une variante cloud
+
+Cette partie est plus avancée. Vercel et Netlify sont des **hébergeurs** :
+ils peuvent servir une application depuis leurs machines plutôt que depuis
+votre PC. Ils ne sont pas les modèles d'IA du projet. Supabase, proposé
+comme autre service dans l'exemple ci-dessous, peut conserver les comptes,
+les annotations et les fichiers privés.
+
+Quelques mots pour lire la suite : **frontend** = l'interface visible ;
+**backend** = les services qui traitent ses demandes ; **base de données** =
+le rangement structuré des annotations ; **stockage** = l'emplacement des
+fichiers audio ; **déployer** = installer une version chez l'hébergeur.
+
+Dans le code actuel, les WAV et leur liste d'annotations (`manifest.jsonl`)
+sont écrits sur le disque du PC. Publier seulement la page web ne remplace
+pas ce rangement, ni le programme qui reçoit les sons. Il faut adapter ces
+parties avant de pouvoir fonctionner sans PC allumé.
 
 **Cette section est un plan de réalisation, pas une recette de déploiement
 direct du dépôt actuel. Aucun backend cloud, migration SQL ou paramétrage
@@ -303,6 +396,7 @@ ne transforme la collecte en traducteur personnel déjà validé.
 - Pour **recréer une app avec un générateur/assistant** : [PROMPT_APP.md](../PROMPT_APP.md).
 - Pour **comprendre l'expérience scientifique** : [tutoriel ML](tutoriel.md).
 
-Les étapes ngrok décrivent le parcours du projet actuel. Les étapes cloud
-sont conditionnées à une adaptation future : aucun déploiement Vercel,
+Les étapes pour enregistrer depuis le téléphone avec un PC allumé sont
+utilisables dans le projet actuel. Les étapes cloud sont conditionnées
+à une adaptation future : aucun déploiement Vercel,
 Netlify ou Supabase n'a été effectué pour rédiger ce document.

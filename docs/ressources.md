@@ -1,4 +1,14 @@
-# Ressources du projet
+# Modèle d'IA, jeux de données et outils utilisés
+
+Cette page donne les sources de départ et le rôle réel de chacune.
+Pour une explication sans prérequis : [comment ça marche](comment-ca-marche.md).
+
+Un **modèle** contient des réglages appris ; un **jeu de données** (*dataset*)
+contient des exemples pour apprendre ou tester ; une **bibliothèque** est
+du code réutilisable pour effectuer des opérations. Ici, « bases de données
+de sons » désigne des datasets, pas un service de stockage de vos fichiers.
+
+Les ressources sont aussi présentées directement dans [l'accueil du projet](../README.md).
 
 ## Données réellement utilisées
 
@@ -13,6 +23,11 @@
 - **Collecte personnelle** : sons et annotations créés avec la PWA,
   conservés localement et exclus du dépôt GitHub. Aucun lien de téléchargement
   public de ces données n'est fourni.
+
+**À ne pas confondre :** CatMeows a servi aux essais publics du projet.
+Le script personnel charge directement les poids PANNs préentraînés sur
+AudioSet ; il ne charge pas automatiquement un modèle réentraîné sur CatMeows.
+Les trois contextes de CatMeows ne définissent pas les catégories de votre chat.
 
 ## Modèle réutilisé
 
@@ -29,6 +44,39 @@ apprend les catégories à partir de ces vecteurs. Voir aussi
 
 Un petit CNN entraîné de zéro sert de comparaison initiale ; c'est du code
 du projet, pas un autre modèle préentraîné téléchargé.
+
+### Que faut-il télécharger, et quand ?
+
+- **Pour enregistrer :** seulement le code et les logiciels indiqués dans
+  [l'installation](installation.md). Aucun poids PANNs ni dataset n'est requis.
+- **Pour l'apprentissage personnel audio :** les poids exacts PANNs ci-dessus,
+  puis vos propres exemples annotés et vérifiés.
+- **Pour reproduire les premiers essais publics :** CatMeows, suivant
+  [le guide de reproduction](baseline.md) et les conditions de ses auteurs.
+- **AudioSet :** aucun téléchargement nécessaire ; on réutilise ce que PANNs
+  a appris dessus, pas toute la collection de sons.
+
+Un fichier de poids est un fichier de réglages, pas le code complet de l'app.
+Les poids et les datasets ne sont pas inclus dans ce GitHub. Consultez les
+conditions propres à chaque ressource avant leur réutilisation.
+
+## Les outils techniques, avec leur rôle
+
+| Outil | Ce qu'il fait ici | Source |
+|---|---|---|
+| Python | Langage du serveur et des scripts d'apprentissage | [Site officiel](https://www.python.org/) |
+| FastAPI | Permet au programme sur le PC de recevoir les sons et de répondre à l'app | [Documentation](https://fastapi.tiangolo.com/) |
+| HTML / JavaScript | Affichent les boutons et pilotent la capture audio dans le navigateur | [Interface du projet](../collecte/static/app.js) |
+| PyTorch | Exécute les réseaux de neurones, dont PANNs et le CNN de comparaison | [Site officiel](https://pytorch.org/) |
+| librosa | Lit et prépare les fichiers son pour l'analyse | [Documentation](https://librosa.org/doc/latest/) |
+| scikit-learn | Entraîne la régression logistique, sélectionne ses réglages et calcule les scores | [Classifieur utilisé](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html) |
+| uv | Installe les logiciels nécessaires et lance le projet | [Documentation](https://docs.astral.sh/uv/) |
+| ngrok | Donne une adresse HTTPS pour joindre l'app sur le PC depuis le téléphone ; ne fait aucun apprentissage | [Documentation](https://ngrok.com/docs/getting-started/) |
+
+Les versions installées sont verrouillées dans [uv.lock](../uv.lock).
+Vercel, Netlify et Supabase sont des pistes pour une autre façon d'héberger
+l'app, **pas des composants déjà branchés dans cette version**. Voir
+[le guide téléphone et hébergement](hebergement.md).
 
 ## Pistes évoquées, pas encore utilisées
 

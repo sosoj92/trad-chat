@@ -1,5 +1,11 @@
 # Du premier miaulement à une expérience de machine learning
 
+Vous découvrez complètement le sujet ? Commencez par
+[l'explication sans prérequis](comment-ca-marche.md). Pour simplement avoir
+l'app sur le téléphone et enregistrer votre chat, suivez d'abord
+[l'installation](installation.md) puis [l'accès sur téléphone](hebergement.md).
+Ce tutoriel vient ensuite pour organiser les exemples et tester l'apprentissage.
+
 Ce tutoriel utilise **Moka, un chat fictif**, pour les exemples. Il ne fournit
 aucun enregistrement personnel. Tu peux apprendre la démarche même si les
 résultats ne permettent finalement pas de reconnaître les contextes de ton chat.
