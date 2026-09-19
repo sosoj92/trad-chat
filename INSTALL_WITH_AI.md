@@ -1,5 +1,10 @@
 # Être accompagné pour installer Trad Chat
 
+Ce prompt sert à **installer le code existant**, pas à générer une nouvelle
+application. Pour la recréer, consulte [PROMPT_APP.md](PROMPT_APP.md).
+Pour choisir entre ngrok et une future variante Vercel/Netlify, lis
+[le guide téléphone et hébergement](docs/hebergement.md).
+
 Tu peux donner ce prompt à un assistant qui lit le dépôt, ou lui fournir
 uniquement les fichiers publics de ce GitHub. Ne lui envoie pas `config.yaml`,
 ta clé, tes audios ou un export de collecte.

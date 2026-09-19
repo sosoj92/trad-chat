@@ -5,6 +5,9 @@ traducteur déjà entraîné. Les fichiers restent sur ton PC.
 
 ## Lancer et ouvrir l'app
 
+Pour l'accès depuis le téléphone et les options cloud, voir
+[le guide ngrok / Vercel / Netlify](hebergement.md).
+
 Première installation : suivre [le guide pas à pas](installation.md), qui
 crée une clé aléatoire et la configuration de son chat. Pour une installation
 déjà prête, depuis la racine du projet :

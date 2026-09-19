@@ -71,6 +71,10 @@ réécouter, puis mets cet essai à la corbeille.
 
 ## 4. Ouvrir sur le téléphone
 
+Le [tutoriel d'hébergement détaillé](hebergement.md) reprend ce parcours
+et explique les différences avec Vercel/Netlify, leurs offres gratuites
+et les adaptations nécessaires pour fonctionner PC éteint.
+
 Le microphone d'une page web exige un contexte sécurisé : localhost convient
 pour tester sur le PC, mais une IP du réseau en HTTP ne suffit pas pour le téléphone.
 

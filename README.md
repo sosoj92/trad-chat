@@ -12,6 +12,16 @@ comme une demande devant la porte. Le résultat peut être décevant : apprendre
 puis suis le [tutoriel éducatif](docs/tutoriel.md).
 Tu préfères être accompagné ? Voici le [prompt d'installation avec une IA](INSTALL_WITH_AI.md).
 
+### Installer, recréer ou héberger ?
+
+- **Installer le code déjà prêt** : [installation](docs/installation.md) et [prompt d'accompagnement](INSTALL_WITH_AI.md).
+- **Recréer l'app avec un générateur/assistant** : [prompt complet de l'application](PROMPT_APP.md), actualisé et sans données privées.
+- **L'utiliser sur son téléphone** : [tutoriel ngrok et guide Vercel/Netlify](docs/hebergement.md).
+
+Le parcours ngrok fonctionne avec l'ordinateur allumé. Une version autonome
+sur Vercel/Netlify nécessite un stockage cloud et une adaptation : le guide
+distingue ce parcours à construire du code actuellement disponible.
+
 ## Ce que tu peux faire aujourd'hui
 
 - Utiliser une petite application web sur ton téléphone, avec ton ordinateur comme serveur.
