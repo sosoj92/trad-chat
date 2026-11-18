@@ -1,17 +1,11 @@
-# 🐱 Trad Chat — créez une application pour enregistrer et mieux comprendre votre chat
+# 🐱 Trad Chat — enregistrer les miaulements de votre chat et apprendre à les reconnaître
 
-Et si l'on pouvait apprendre à reconnaître certains contextes à partir des
-miaulements de **son propre chat** ? C'est l'expérience proposée ici.
+**Une application pour téléphone qui enregistre les miaulements de votre chat et vous laisse noter la
+situation (devant la porte, à l'heure du repas…). Avec ces exemples, on entraîne un petit modèle d'IA qui
+essaie de reconnaître la situation sur de nouveaux miaulements.**
 
-Vous enregistrez des sons, vous notez ce que vous observez, puis vous utilisez
-ces exemples pour entraîner et tester un modèle d'intelligence artificielle.
-Le but, petit à petit, est qu'il reconnaisse des contextes sur **de nouveaux
-miaulements qu'il n'a jamais entendus**. Ce résultat reste à vérifier :
-il ne s'agit pas de traduire des phrases ni de lire les pensées du chat.
-
-**Pas besoin de savoir programmer pour suivre le guide de collecte.**
-GitHub est simplement le site où nous partageons les fichiers du projet
-et leur mode d'emploi. Vous pouvez les récupérer pour créer votre propre installation.
+Ce n'est pas un traducteur : il ne lit pas les pensées du chat, et le résultat reste à vérifier pour
+chaque chat. Pas besoin de savoir programmer pour enregistrer votre chat.
 
 ## Pour commencer, qu'est-ce que vous voulez faire ?
 
